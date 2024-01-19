@@ -27,11 +27,6 @@ public partial class  CustomerLogin{
 public class Code{
     public string code {get;set;}
 }
-// class Customer{
-//     public string Name{ get; set; }
-//     public string  Email { get; set; }
-//     public string  Password { get; set; }
-// }
 class Response{
     public string Status { get; set; }
     public string Error { get; set; }
@@ -39,9 +34,32 @@ class Response{
         Status = name;
         Error = error_name;
     }    
-
 }
-
+public class RequestMainPage{
+    public string Status { get; set; }
+}
+public class categories{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public ICollection<goods> goodss { get;set;}
+}
+public class goods{
+    public int Id { get; set; }
+    public string goods_name { get; set; }
+    public int goods_price { get; set; }
+    public int goods_amount { get; set; }
+    public string goods_description { get; set; }
+    public int сategoriesId {get;set;}
+    public categories categories {get;set;}
+}
+public class goodsdata{
+    public List<goods> Data{get;set;}
+    public int Length{get;set;}
+    public goodsdata(List<goods> products, int length){
+        Data = products;
+        Length = length;
+    }
+}
 class Email {
     public string To;
     public string Name;
@@ -115,12 +133,24 @@ class Email {
 }
 public partial class EContext: DbContext{
     public virtual DbSet<Customer> Customers {get;set;}
+    public virtual DbSet<categories> categories {get;set;}
+    public virtual DbSet<goods> goods {get;set;}
      
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+    
         string connectionString = "server=localhost;user=root;password=root123;database=serviceappliances";
         optionsBuilder.UseMySQL(connectionString);
     }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<categories>()
+        .HasMany(e => e.goodss)
+        .WithOne(e => e.categories)
+        .HasForeignKey(e => e.сategoriesId)
+        .HasPrincipalKey(e => e.Id);
+    }
+
 }
 namespace Nikita{
     static class Programm{
@@ -141,19 +171,31 @@ namespace Nikita{
                     HttpRequest request = context.Request;
                     switch(request.Method){
                         case "GET":
-                            await context.Response.SendFileAsync("html/main.html");
+                            await context.Response.SendFileAsync("html/main.html"); 
                             break;
                         case "POST":
-                            if(context.Session.Keys.Contains("email")){
-                                string email = context.Session.GetString("email");
-                                var user_data = await db.Customers.Where(p => p.Email==email).FirstAsync();
-                                await context.Response.WriteAsJsonAsync<Customer>(user_data);   
-                            }
-                            else{
-                                Response response = new Response("Error", "Your session expired or didn't exist");
-                                await context.Response.WriteAsJsonAsync<Response>(response);   
+                            if (request.ContentType == "application/json"){
+                                var MainRequest = await request.ReadFromJsonAsync<RequestMainPage>();
+                                if (MainRequest.Status == "get_profile_data"){
+                                    if(context.Session.Keys.Contains("email")){
+                                        string email = context.Session.GetString("email");
+                                        var user_data = await db.Customers.Where(p => p.Email==email).FirstAsync();
+                                        await context.Response.WriteAsJsonAsync<Customer>(user_data);   
+                                    }
+                                    else{
+                                        Response response = new Response("Error", "Your session expired or didn't exist");
+                                        await context.Response.WriteAsJsonAsync<Response>(response);   
+                                    }
+                                }
+                                else if(MainRequest.Status == "get_goods_data"){
+                                    var goods_data = db.goods.ToList();
+                                    goodsdata Goods = new goodsdata(goods_data,goods_data.Count());
+                                    await context.Response.WriteAsJsonAsync<goodsdata>(Goods);  
+                                }   
+                                
                             }
                             break;
+                                
                     }
                 });
                 app.Map("/code", async(context)=>{
@@ -221,8 +263,6 @@ namespace Nikita{
                                 string jsonString = JsonSerializer.Serialize(customer_data);
                                 bool exist_customer =  await db.Customers.AnyAsync(p => p.Email==customer_data.Email);
                                 if (!exist_customer){
-                                    // await db.Customers.AddAsync(customer_data);
-                                    // await db.SaveChangesAsync();
                                     context.Session.SetString("customer_data", jsonString);
                                     context.Session.SetString("Check_email", "false");
                                     context.Session.SetString("email", customer_data.Email);

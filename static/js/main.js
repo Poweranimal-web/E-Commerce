@@ -1,7 +1,15 @@
-async function get_data(){
+const list_cards = document.getElementById("list-card"); 
+async function get_profile_data(){
     let button = document.getElementById("auth-button");
+
     let response = await fetch("/",{
-        method: "POST"
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",  
+        },
+        body: JSON.stringify({
+            "Status": "get_profile_data"
+        })
     });
     let res = await response.json();
     if ("status" in res){
@@ -14,4 +22,29 @@ async function get_data(){
 
     }
 }
-get_data();
+async function get_goods_data(){
+    let response = await fetch("/",{
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",  
+        },
+        body: JSON.stringify({
+            "Status": "get_goods_data"
+        })
+    });
+    let res = await response.json();
+    if (res.length > 0){
+        res.data.map((product)=>{
+            list_cards.innerHTML += `<div class="card">
+            <img src="/Static/img/WIN_20220925_17_36_16_Pro.jpg" alt="Avatar" style="width: 100%;">
+            <div class="container">
+                <h4><b>${product.goods_name}</b></h4>
+                <p>${product.goods_price} UAH</p>
+                <button class="btn-show">Show</button>
+            </div>
+        </div>`
+        })
+    }
+}
+get_goods_data();
+get_profile_data();

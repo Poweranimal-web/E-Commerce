@@ -52,3 +52,35 @@ nav .navbar li a{
 .auth{
     margin-left: auto;
 }
+.list-card{
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+}
+.card {
+    /* Add shadows to create the "card" effect */
+    width: 88%;
+    margin-left: 10px;
+    margin-top: 28px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    transition: 0.3s;
+}
+  
+  /* On mouse-over, add a deeper shadow */
+  
+  /* Add some padding inside the card container */
+  .container {
+    padding: 2px 16px;
+  }
+  .btn-show{
+    background-color: #FF671F;
+    transition: background-color 0.8s ease;
+    border: none;
+    border-radius: 6px;
+    width: 116px;
+    height: 33px;
+    color: white;
+  }
+.btn-show:hover{
+    background-color: #b94916;
+    transition: background-color 0.8s ease;
+}
