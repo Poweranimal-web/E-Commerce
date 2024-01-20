@@ -1,4 +1,6 @@
 const list_cards = document.getElementById("list-card"); 
+const search_input = document.getElementById("search");
+search_input.addEventListener("input", search);
 async function get_profile_data(){
     let button = document.getElementById("auth-button");
 
@@ -8,7 +10,8 @@ async function get_profile_data(){
             "Content-Type": "application/json",  
         },
         body: JSON.stringify({
-            "Status": "get_profile_data"
+            "Status": "get_profile_data",
+            "Data":  ""
         })
     });
     let res = await response.json();
@@ -29,7 +32,9 @@ async function get_goods_data(){
             "Content-Type": "application/json",  
         },
         body: JSON.stringify({
-            "Status": "get_goods_data"
+            "Status": "get_goods_data",
+            "Data":  ""
+
         })
     });
     let res = await response.json();
@@ -44,6 +49,37 @@ async function get_goods_data(){
             </div>
         </div>`
         })
+    }
+}
+async function search(event){
+    let value = event.target.value;
+    let response = await fetch("/",{
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",  
+        },
+        body: JSON.stringify({
+            "Status": "search",
+            "Data":  value
+        })
+    });
+    let res = await response.json();
+    if (res.length > 0){
+        list_cards.innerHTML = "";
+        res.data.map((product)=>{
+            list_cards.innerHTML += `<div class="card">
+            <img src="/Static/img/WIN_20220925_17_36_16_Pro.jpg" alt="Avatar" style="width: 100%;">
+            <div class="container">
+                <h4><b>${product.goods_name}</b></h4>
+                <p>${product.goods_price} UAH</p>
+                <button class="btn-show">Show</button>
+            </div>
+        </div>`
+        })
+    }
+    else{
+        list_cards.innerHTML = "";
+        list_cards.innerHTML += `<h2>Not found</h2>`;
     }
 }
 get_goods_data();

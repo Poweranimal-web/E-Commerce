@@ -84,3 +84,13 @@ nav .navbar li a{
     background-color: #b94916;
     transition: background-color 0.8s ease;
 }
+.search{
+    height: 34px;
+    border-radius: 7px;
+    border: none;
+    width: 243px;
+
+}
+.search:focus{
+    outline: none;
+}

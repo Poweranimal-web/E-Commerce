@@ -37,6 +37,7 @@ class Response{
 }
 public class RequestMainPage{
     public string Status { get; set; }
+    public string Data {get;set;}
 }
 public class categories{
     public int Id { get; set; }
@@ -191,6 +192,20 @@ namespace Nikita{
                                     var goods_data = db.goods.ToList();
                                     goodsdata Goods = new goodsdata(goods_data,goods_data.Count());
                                     await context.Response.WriteAsJsonAsync<goodsdata>(Goods);  
+                                }
+                                else if(MainRequest.Status == "search"){
+                                    if (MainRequest.Data.Length > 0){
+                                        var name = $"%{MainRequest.Data}%";
+                                        var result = db.goods.FromSqlRaw("SELECT * FROM goods WHERE goods_name LIKE {0}", name).ToList();
+                                        goodsdata Goods = new goodsdata(result,result.Count());
+                                        await context.Response.WriteAsJsonAsync<goodsdata>(Goods); 
+                                    }
+                                    else{
+                                        var result = db.goods.ToList();
+                                        goodsdata Goods = new goodsdata(result,result.Count());
+                                        await context.Response.WriteAsJsonAsync<goodsdata>(Goods); 
+                                    }
+                                    
                                 }   
                                 
                             }
