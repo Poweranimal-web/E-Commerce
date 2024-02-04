@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.cdnfonts.com/css/montserrat" rel="stylesheet">
+    <link rel="stylesheet" href="/Static/css/basket.css">
+</head>
+<body>
+    <nav>
+        <ul class="navbar">
+            <li><a href="/">Home</a></li>
+            <li class="dropdown">
+                <a href="#">Vacuums</a>
+                <div class="dropdown-content">
+                    <a href="#">Link1</a>
+                    <a href="#">Link2</a>
+                    <a href="#">Link3</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <a href="#">Dishwasher</a>
+                <div class="dropdown-content">
+                    <a href="#">Link3</a>
+                    <a href="#">Link4</a>
+                    <a href="#">Link5</a>
+                </div>
+            </li>
+            <li class="auth" id="auth-button"><a href="/auth">Sign in</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="list-cards">
+            <div class="change-basket" id="change-basket">
+                <button class="delete-all-button">Delete all</button>
+            </div>
+            <div class="total-card">
+                <div style="display: flex;justify-content: center;"><button style="width: 311px;
+                    height: 33px;
+                    border: 0px;
+                    background-color: #FF671F;
+                    border-radius: 8px;
+                    margin-top: 10px;">Order</button></div>
+                <div class="text"><p>Product on sum</p> <div class="price" id="price"><p style="margin-right: 10px;"></p></div></div>
+                <div class="text"><p>Sale</p> <div class="price" id="sale"><p style="margin-right: 10px;">0</p></div></div>
+                <div class="text"><p>Total</p> <div class="price" id="total"><p style="margin-right: 10px;"></p></div></div>
+            </div>
+        </div>
+    </main>
+    <script src="/Static/js/basket.js"></script>
+</body>
+</html>

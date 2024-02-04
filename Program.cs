@@ -1,17 +1,13 @@
 using System;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
 using System.Net.Mail;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
-
-
+using System.Text.Json.Serialization;
+using System.Net;
+using MySqlX.XDevAPI;
 public partial class  Customer{
     public int Id{ get; set; }
     public string Name{ get; set; }
@@ -35,10 +31,12 @@ class Response{
         Error = error_name;
     }    
 }
-public class RequestMainPage{
-    public string Status { get; set; }
-    public string Data {get;set;}
+public class Requests{
+    public string Status {get;set;}
+    public string? Data {get;set;}
+    public Dictionary<string, string>? ExtraData {get;set;}
 }
+
 public class categories{
     public int Id { get; set; }
     public string Name { get; set; }
@@ -52,15 +50,36 @@ public class goods{
     public string goods_description { get; set; }
     public int сategoriesId {get;set;}
     public categories categories {get;set;}
+    public ICollection<basket> baskets { get;set;}
 }
-public class goodsdata{
-    public List<goods> Data{get;set;}
+public class goodsdata <Type>{
+    public List<Type> Data{get;set;}
     public int Length{get;set;}
-    public goodsdata(List<goods> products, int length){
+    public goodsdata(List<Type> products, int length){
         Data = products;
         Length = length;
     }
 }
+public class basket{
+    public int Id{get;set;}
+    public string cookie_name{get;set;}
+    public int goodsId{get;set;}
+    public int amount{get; set;}
+    public goods goods{get;set;} 
+}
+public class LieInBasket{
+    public int Id_product { get; set; }
+    public string basket_name{get;set;}
+    public string goods_name { get; set; }
+    public int goods_id { get; set; }
+    public int goods_price { get; set; }
+    public int amount{get; set;}    
+}
+public class DetailBasketData{
+    public string cookie;
+    public int id;
+}
+
 class Email {
     public string To;
     public string Name;
@@ -136,6 +155,7 @@ public partial class EContext: DbContext{
     public virtual DbSet<Customer> Customers {get;set;}
     public virtual DbSet<categories> categories {get;set;}
     public virtual DbSet<goods> goods {get;set;}
+    public virtual DbSet<basket> baskets {get;set;}
      
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -145,11 +165,17 @@ public partial class EContext: DbContext{
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<goods>()
+        .HasMany(e => e.baskets)
+        .WithOne(e =>e.goods)
+        .HasForeignKey(e => e.goodsId)
+        .HasPrincipalKey(e => e.Id);
         modelBuilder.Entity<categories>()
         .HasMany(e => e.goodss)
         .WithOne(e => e.categories)
         .HasForeignKey(e => e.сategoriesId)
         .HasPrincipalKey(e => e.Id);
+        
     }
 
 }
@@ -159,6 +185,8 @@ namespace Nikita{
                 var builder = WebApplication.CreateBuilder();
                 builder.Services.AddDistributedMemoryCache();
                 builder.Services.AddSession();
+                builder.Services.AddControllers().AddJsonOptions(x =>
+                x.JsonSerializerOptions.ReferenceHandler =  ReferenceHandler.IgnoreCycles);
                 var app = builder.Build();
                 EContext db = new EContext();
                 app.UseSession();
@@ -176,7 +204,7 @@ namespace Nikita{
                             break;
                         case "POST":
                             if (request.ContentType == "application/json"){
-                                var MainRequest = await request.ReadFromJsonAsync<RequestMainPage>();
+                                var MainRequest = await request.ReadFromJsonAsync<Requests>();
                                 if (MainRequest.Status == "get_profile_data"){
                                     if(context.Session.Keys.Contains("email")){
                                         string email = context.Session.GetString("email");
@@ -190,20 +218,20 @@ namespace Nikita{
                                 }
                                 else if(MainRequest.Status == "get_goods_data"){
                                     var goods_data = db.goods.ToList();
-                                    goodsdata Goods = new goodsdata(goods_data,goods_data.Count());
-                                    await context.Response.WriteAsJsonAsync<goodsdata>(Goods);  
+                                    goodsdata<goods> Goods = new goodsdata<goods>(goods_data,goods_data.Count());
+                                    await context.Response.WriteAsJsonAsync<goodsdata<goods>>(Goods);  
                                 }
                                 else if(MainRequest.Status == "search"){
                                     if (MainRequest.Data.Length > 0){
                                         var name = $"%{MainRequest.Data}%";
                                         var result = db.goods.FromSqlRaw("SELECT * FROM goods WHERE goods_name LIKE {0}", name).ToList();
-                                        goodsdata Goods = new goodsdata(result,result.Count());
-                                        await context.Response.WriteAsJsonAsync<goodsdata>(Goods); 
+                                        goodsdata<goods> Goods = new goodsdata<goods>(result,result.Count());
+                                        await context.Response.WriteAsJsonAsync<goodsdata<goods>>(Goods); 
                                     }
                                     else{
                                         var result = db.goods.ToList();
-                                        goodsdata Goods = new goodsdata(result,result.Count());
-                                        await context.Response.WriteAsJsonAsync<goodsdata>(Goods); 
+                                        goodsdata<goods> Goods = new goodsdata<goods>(result,result.Count());
+                                        await context.Response.WriteAsJsonAsync<goodsdata<goods>>(Goods); 
                                     }
                                     
                                 }   
@@ -290,6 +318,52 @@ namespace Nikita{
                                     await context.Response.WriteAsJsonAsync<Response>(response);   
                                 }  
                                 break;
+                    }
+                });
+                app.Map("/basket", async(context)=>{
+                    HttpRequest request = context.Request;
+                    switch(request.Method){
+                        case "GET":
+                            await context.Response.SendFileAsync("html/basket.html");
+                            break;
+                        case "POST":
+                            Requests jsondata = await request.ReadFromJsonAsync<Requests>();
+                            if (jsondata.Status == "get_basket"){
+                                // var list_products = db.baskets.Where(e => e.cookie_name==jsondata.Data).ToList();
+                                var list_products = (from b in db.baskets
+                                                    join g in db.goods on b.goodsId equals g.Id 
+                                                    where b.cookie_name == jsondata.Data
+                                                    select new LieInBasket{Id_product=g.Id,basket_name=b.cookie_name, 
+                                                                        goods_id=g.Id, goods_name=g.goods_name, goods_price=g.goods_price, amount=b.amount}).ToList();
+        
+                                goodsdata<LieInBasket> Goods = new goodsdata<LieInBasket>(list_products,list_products.Count());
+                                await context.Response.WriteAsJsonAsync<goodsdata<LieInBasket>>(Goods);
+                            }
+                            else if (jsondata.Status == "add_item"){
+
+                                await db.baskets.Where(b => b.cookie_name == jsondata.ExtraData["cookie"] && b.goodsId == Convert.ToInt32(jsondata.ExtraData["id"]))
+                                .ExecuteUpdateAsync(s=>s.SetProperty(u=>u.amount, u=>u.amount+1));
+                                await db.SaveChangesAsync();
+                                Response res = new Response("Updated");
+                                await context.Response.WriteAsJsonAsync<Response>(res);
+                            }
+                            else if (jsondata.Status == "remove_item"){
+
+                                await db.baskets.Where(b => b.cookie_name == jsondata.ExtraData["cookie"] && b.goodsId == Convert.ToInt32(jsondata.ExtraData["id"]))
+                                .ExecuteUpdateAsync(s=>s.SetProperty(u=>u.amount, u=>u.amount-1));
+                                await db.SaveChangesAsync();
+                                Response res = new Response("Updated");
+                                await context.Response.WriteAsJsonAsync<Response>(res);
+                            }
+                            else if(jsondata.Status == "remove_product"){
+                                await db.baskets.Where(b => b.cookie_name == jsondata.ExtraData["cookie"] && b.goodsId == Convert.ToInt32(jsondata.ExtraData["id"]))
+                                .ExecuteDeleteAsync();
+                                await db.SaveChangesAsync();                          
+                                Response res = new Response("Deleted");
+                                await context.Response.WriteAsJsonAsync<Response>(res);
+                            }
+
+                            break;
                     }
                 });
                 app.Run();

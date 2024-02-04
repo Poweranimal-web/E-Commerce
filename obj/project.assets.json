@@ -2635,11 +2635,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\E-commerce\\Shop\\Shop.csproj",
+      "projectUniqueName": "d:\\E-commerce\\Shop\\Shop.csproj",
       "projectName": "Shop",
-      "projectPath": "D:\\E-commerce\\Shop\\Shop.csproj",
+      "projectPath": "d:\\E-commerce\\Shop\\Shop.csproj",
       "packagesPath": "C:\\Users\\Nikita\\.nuget\\packages\\",
-      "outputPath": "D:\\E-commerce\\Shop\\obj\\",
+      "outputPath": "d:\\E-commerce\\Shop\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",

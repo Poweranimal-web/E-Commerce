@@ -41,7 +41,7 @@ async function get_goods_data(){
     if (res.length > 0){
         res.data.map((product)=>{
             list_cards.innerHTML += `<div class="card">
-            <img src="/Static/img/WIN_20220925_17_36_16_Pro.jpg" alt="Avatar" style="width: 100%;">
+            <img src="/Static/img/WIN_20220925_17_36_16_Pro.jpg" alt="Avatar" style="width: 100%; height:318px;border-top-left-radius:10px;border-top-right-radius:10px;">
             <div class="container">
                 <h4><b>${product.goods_name}</b></h4>
                 <p>${product.goods_price} UAH</p>
@@ -68,7 +68,7 @@ async function search(event){
         list_cards.innerHTML = "";
         res.data.map((product)=>{
             list_cards.innerHTML += `<div class="card">
-            <img src="/Static/img/WIN_20220925_17_36_16_Pro.jpg" alt="Avatar" style="width: 100%;">
+            <img src="/Static/img/WIN_20220925_17_36_16_Pro.jpg" alt="Avatar" style="width: 100%; height:318px;border-top-left-radius:10px;border-top-right-radius:10px;">
             <div class="container">
                 <h4><b>${product.goods_name}</b></h4>
                 <p>${product.goods_price} UAH</p>
